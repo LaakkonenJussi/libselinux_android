@@ -1515,6 +1515,19 @@ int selinux_android_load_policy(void)
 			}
 			rc = mount(SELINUXFS, mnt, SELINUXFS, 0, NULL);
 		}
+		/*
+		 * When creating a new mount (no flags are set) and error is
+		 * returned with EBUSY errno it means that the device is already
+		 * mounted. From man 2 mount: "An attempt was made to stack a
+		 * new mount directly on top of an existing mount point that was
+		 * created in this mount namespace with the same source and
+		 * target." In this case the error can be ignored and return 0.
+		 */
+		if (errno == EBUSY) {
+			selinux_log(SELINUX_INFO, "SELinux: selinuxfs is "
+						"already mounted at %s", mnt);
+			rc = 0;
+		}
 	}
 	if (rc < 0) {
 		selinux_log(SELINUX_ERROR,"SELinux:  Could not mount selinuxfs:  %s\n",
